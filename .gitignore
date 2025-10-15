@@ -1,0 +1,35 @@
+# Ignore virtual environments
+.venv/
+venv/
+env/
+
+# Ignore Airflow logs and plugins
+logs/
+plugins/
+
+# Ignore config and local data folders
+config/
+dremio_data/
+
+# Ignore Python cache and compiled files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore environment and lock files
+.env
+uv.lock
+
+# Ignore Docker artifacts
+*.pid
+*.log
+*.tmp
+
+# Ignore system/IDE files
+.DS_Store
+.idea/
+.vscode/
+
+# Ignore any local temp data
+*.local
