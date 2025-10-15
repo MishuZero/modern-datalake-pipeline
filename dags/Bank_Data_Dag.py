@@ -4,17 +4,16 @@ import random
 from datetime import datetime
 import os
 import boto3
-
 from airflow.decorators import dag, task
 
-# --- DAG Configuration ---
-MINIO_ENDPOINT = "http://minio:9000"   # service name from docker-compose
+
+MINIO_ENDPOINT = "http://minio:9000"
 MINIO_ACCESS_KEY = "minioadmin"
 MINIO_SECRET_KEY = "minioadmin"
-MINIO_BUCKET_NAME = "banking-data"  # make sure this bucket exists
+MINIO_BUCKET_NAME = "banking-data"
 NUMBER_OF_CUSTOMERS = 1000
 
-# Local file paths for intermediate storage on the Airflow worker
+
 LOCAL_CUSTOMERS_FILE = "/tmp/customers.csv"
 LOCAL_TRANSACTIONS_FILE = "/tmp/transactions.csv"
 
@@ -31,11 +30,10 @@ LOCAL_TRANSACTIONS_FILE = "/tmp/transactions.csv"
     """
 )
 def generate_banking_data_dag():
-    """ETL DAG to Generate and Upload Fake Banking Data"""
+
 
     @task
     def generate_customers_data() -> str:
-        """Generate fake customer data and save it to a local CSV."""
         print(f"Generating {NUMBER_OF_CUSTOMERS} fake customer records.")
         fake = Faker()
         customers = [
@@ -51,12 +49,12 @@ def generate_banking_data_dag():
 
         df = pd.DataFrame(customers)
         df.to_csv(LOCAL_CUSTOMERS_FILE, index=False)
-        print(f"✅ Customer data saved locally to {LOCAL_CUSTOMERS_FILE}")
+        print(f"Customer data saved locally to {LOCAL_CUSTOMERS_FILE}")
         return LOCAL_CUSTOMERS_FILE
 
     @task
     def generate_transactions_data(customer_file_path: str) -> str:
-        """Generate fake transaction data for each customer."""
+
         print(f"Reading customer data from {customer_file_path}")
         customers_df = pd.read_csv(customer_file_path)
         customer_ids = customers_df["customer_id"].tolist()
@@ -84,8 +82,7 @@ def generate_banking_data_dag():
 
     @task
     def upload_to_minio(file_path: str, object_name: str):
-        """Upload a file to MinIO using boto3."""
-        print(f"📤 Uploading {file_path} to MinIO bucket '{MINIO_BUCKET_NAME}' as '{object_name}'")
+        print(f" Uploading {file_path} to MinIO bucket '{MINIO_BUCKET_NAME}' as '{object_name}'")
 
         s3_client = boto3.client(
             "s3",
@@ -97,21 +94,20 @@ def generate_banking_data_dag():
 
         try:
             s3_client.upload_file(file_path, MINIO_BUCKET_NAME, object_name)
-            print("✅ Upload successful!")
+            print(" Upload successful!")
         except Exception as e:
-            print(f"❌ Upload failed: {e}")
+            print(f" Upload failed: {e}")
             raise
 
     @task
     def cleanup_local_files(files_to_delete: list):
-        """Remove temporary files from the local filesystem."""
+
         print(f"🧹 Cleaning up local files: {files_to_delete}")
         for f in files_to_delete:
             if os.path.exists(f):
                 os.remove(f)
                 print(f"Removed {f}")
 
-    # --- Define Task Dependencies ---
     customers_file = generate_customers_data()
     transactions_file = generate_transactions_data(customers_file)
 
@@ -124,5 +120,5 @@ def generate_banking_data_dag():
     ])
 
 
-# Instantiate the DAG
+
 generate_banking_data_dag()
